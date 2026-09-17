@@ -71,6 +71,11 @@ th{background:#f4f7f5;font-size:12px;vertical-align:top}tr:hover td{background:#
 .icon-btn{border:0;background:#edf2ef;border-radius:7px;width:34px;height:34px}
 .toast{position:fixed;right:20px;bottom:20px;background:#163e33;color:#fff;padding:11px 14px;border-radius:8px;display:none;z-index:70;box-shadow:var(--shadow)}
 .mobile-menu{display:none}
+.auth-backdrop{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:20px;z-index:100}
+.auth-box{width:min(430px,100%);background:#fff;border:1px solid var(--line);border-radius:14px;padding:26px;box-shadow:0 18px 55px rgba(0,0,0,.12)}
+.auth-box h1{font-size:25px;margin-bottom:6px}.auth-box .actions{margin-top:15px}.auth-status{min-height:20px;margin-top:10px;font-size:13px;color:var(--muted)}
+.auth-user{font-size:12px;color:var(--muted);margin-top:4px}
+
 .search{max-width:280px}
 hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 @media(max-width:1100px){
@@ -92,7 +97,19 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 </style>
 </head>
 <body>
-<div class="app">
+<div class="auth-backdrop" id="authScreen">
+  <div class="auth-box">
+    <div style="font-size:32px">🌱</div>
+    <h1>Saatgut Planung</h1>
+    <div class="muted">Betrieb Hach</div>
+    <p class="small muted" style="margin:15px 0">Bitte anmelden, um deine synchronisierten Daten zu öffnen.</p>
+    <div><label>E-Mail</label><input id="loginEmail" type="email" autocomplete="email" placeholder="Deine E-Mail-Adresse"></div>
+    <div style="margin-top:10px"><label>Passwort</label><input id="loginPassword" type="password" autocomplete="current-password" placeholder="Passwort"></div>
+    <div class="actions"><button class="btn" type="button" onclick="loginUser()">Anmelden</button></div>
+    <div class="auth-status" id="authStatus"></div>
+  </div>
+</div>
+<div class="app" id="appRoot" style="display:none">
 <aside class="sidebar">
   <div class="brand">🌱 Saatgut Planung<small>Dein Betrieb. Deine Planung.</small></div>
   <nav class="nav">
@@ -110,6 +127,7 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 <header>
   <div class="header-title">🚜 Betrieb Hach</div>
   <div class="header-actions">
+    <span class="auth-user" id="authUser"></span>
     <button class="btn secondary small" onclick="backupData()">Daten sichern</button>
     <button class="btn small" onclick="openModal('fieldModal')">+ Schlag</button>
   </div>
@@ -304,7 +322,12 @@ hr{border:0;border-top:1px solid var(--line);margin:18px 0}
 </div>
 <div class="toast" id="toast"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+const SUPABASE_URL="https://adjgttpzofbymbhkfrxl.supabase.co";
+const SUPABASE_KEY="sb_publishable_j1tHzqovZj4hiyMiv81Yog_mhMjsQ_D";
+const supabaseClient=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let currentUser=null,cloudReady=false;
 const crops={
   "Kleegras":{icon:"☘️",desc:"Mehrjähriges Futtergras",rate:25},
   "Sommererbsen":{icon:"🫛",desc:"Sommerleguminose",rate:180},
@@ -318,9 +341,9 @@ const defaultData=()=>({
   stock:Object.fromEntries(Object.keys(crops).map(c=>[c,{kg:0,location:""}])),
   sowing:[],fields:[],planningNote:""
 });
-let data=loadData(),selectedCrop="Kleegras",editStock=null;
+let data=loadLocalData(),selectedCrop="Kleegras",editStock=null;
 
-function loadData(){
+function loadLocalData(){
   try{
     const x=JSON.parse(localStorage.getItem(KEY)||"null")||defaultData();
     x.stock=x.stock||{};x.sowing=x.sowing||[];x.fields=x.fields||[];x.planningNote=x.planningNote||"";
@@ -329,7 +352,95 @@ function loadData(){
     return x;
   }catch(e){return defaultData()}
 }
-function saveData(){localStorage.setItem(KEY,JSON.stringify(data));renderAll()}
+function saveLocal(){localStorage.setItem(KEY,JSON.stringify(data))}
+function setAuthStatus(msg,bad=false){const el=document.getElementById("authStatus");if(el){el.textContent=msg;el.style.color=bad?"var(--danger)":"var(--muted)"}}
+
+async function loginUser(){
+  const email=document.getElementById("loginEmail").value.trim();
+  const password=document.getElementById("loginPassword").value;
+  if(!email||!password){setAuthStatus("Bitte E-Mail und Passwort eingeben.",true);return}
+  setAuthStatus("Anmeldung läuft …");
+  const {data:res,error}=await supabaseClient.auth.signInWithPassword({email,password});
+  if(error){setAuthStatus("Anmeldung fehlgeschlagen: "+error.message,true);return}
+  await startCloud(res.session);
+}
+
+async function startCloud(session){
+  currentUser=session?.user||null;
+  if(!currentUser){
+    document.getElementById("appRoot").style.display="none";
+    document.getElementById("authScreen").style.display="flex";
+    return;
+  }
+  setAuthStatus("Daten werden geladen …");
+  try{
+    const remote=await loadCloudData();
+    if(remote.hasAny){
+      data=remote.data;
+      saveLocal();
+    }else if(hasLocalData(data)){
+      await syncToCloud();
+    }
+    cloudReady=true;
+    document.getElementById("authScreen").style.display="none";
+    document.getElementById("appRoot").style.display="flex";
+    document.getElementById("authUser").textContent=currentUser.email||"";
+    setup();
+  }catch(e){
+    console.error(e);
+    setAuthStatus("Cloud-Daten konnten nicht geladen werden: "+(e.message||e),true);
+  }
+}
+
+function hasLocalData(x){
+  return Object.values(x.stock||{}).some(v=>(+v.kg||0)>0 || (v.location||"")) || (x.fields||[]).length>0 || (x.sowing||[]).length>0 || !!x.planningNote;
+}
+
+async function loadCloudData(){
+  const uid=currentUser.id;
+  const [st,fi,so,set]=await Promise.all([
+    supabaseClient.from("stock").select("crop,kg,location").eq("user_id",uid),
+    supabaseClient.from("fields").select("id,name,area,note,created_at").eq("user_id",uid).order("created_at",{ascending:true}),
+    supabaseClient.from("sowing").select("id,date,crop,field_id,field_name,area,plan,actual,variety,batch,machine,note,created_at").eq("user_id",uid).order("date",{ascending:false}),
+    supabaseClient.from("settings").select("planning_note").eq("user_id",uid).maybeSingle()
+  ]);
+  for(const r of [st,fi,so])if(r.error)throw r.error;
+  if(set.error && set.error.code!=="42P01")throw set.error;
+  const d=defaultData();
+  st.data.forEach(r=>{d.stock[r.crop]={kg:+r.kg||0,location:r.location||""}});
+  d.fields=fi.data.map(r=>({id:r.id,name:r.name,area:+r.area||0,note:r.note||""}));
+  d.sowing=so.data.map(r=>({id:r.id,date:r.date,crop:r.crop,fieldId:r.field_id,field:r.field_name||"",area:+r.area||0,plan:+r.plan||0,actual:+r.actual||0,variety:r.variety||"",batch:r.batch||"",machine:r.machine||"",note:r.note||""}));
+  d.planningNote=set.data?.planning_note ?? data?.planningNote ?? "";
+  return {data:d,hasAny:(st.data.length+fi.data.length+so.data.length)>0};
+}
+
+async function syncToCloud(){
+  if(!currentUser) return;
+  const uid=currentUser.id;
+  const stockRows=Object.keys(crops).map(c=>({user_id:uid,crop:c,kg:+(data.stock[c]?.kg||0),location:data.stock[c]?.location||""}));
+  let r=await supabaseClient.from("stock").upsert(stockRows,{onConflict:"user_id,crop"});if(r.error)throw r.error;
+  // Replace this user's fields and sowings to keep the small single-user dataset consistent.
+  r=await supabaseClient.from("sowing").delete().eq("user_id",uid);if(r.error)throw r.error;
+  r=await supabaseClient.from("fields").delete().eq("user_id",uid);if(r.error)throw r.error;
+  const fieldRows=(data.fields||[]).map(f=>({id:crypto.randomUUID(),user_id:uid,name:f.name,area:+f.area||0,note:f.note||"",created_at:new Date().toISOString()}));
+  const idMap=new Map((data.fields||[]).map((f,i)=>[String(f.id),fieldRows[i]?.id]));
+  if(fieldRows.length){r=await supabaseClient.from("fields").insert(fieldRows);if(r.error)throw r.error}
+  const sowRows=(data.sowing||[]).map(x=>({id:crypto.randomUUID(),user_id:uid,date:x.date,crop:x.crop,field_id:idMap.get(String(x.fieldId))||null,field_name:x.field||"",area:+x.area||0,plan:+x.plan||0,actual:+x.actual||0,variety:x.variety||"",batch:x.batch||"",machine:x.machine||"",note:x.note||"",created_at:new Date().toISOString()}));
+  if(sowRows.length){r=await supabaseClient.from("sowing").insert(sowRows);if(r.error)throw r.error}
+  r=await supabaseClient.from("settings").upsert({user_id:uid,planning_note:data.planningNote||""},{onConflict:"user_id"});
+  if(r.error && r.error.code!=="42P01")throw r.error;
+  saveLocal();
+}
+
+async function saveData(){
+  saveLocal();
+  renderAll();
+  if(cloudReady){
+    try{await syncToCloud();toast("Gespeichert und synchronisiert")}
+    catch(e){console.error(e);toast("Lokal gespeichert – Cloud-Synchronisierung fehlgeschlagen") }
+  }
+}
+
 function num(x){return new Intl.NumberFormat("de-DE",{maximumFractionDigits:2}).format(Number(x)||0)}
 function money(x){return new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(Number(x)||0)}
 function today(){return new Date().toISOString().slice(0,10)}
@@ -512,7 +623,7 @@ function calcNeed(){
   const a=+document.getElementById("needArea").value||0,r=+document.getElementById("needRate").value||0,p=+document.getElementById("needPrice").value||0;
   document.getElementById("needResult").innerHTML=`Bedarf: <span class="big">${num(a*r)} kg</span><br>Gesamtkosten: <b>${money(a*r*p)}</b>`;
 }
-function saveNote(){data.planningNote=document.getElementById("planningNote").value;localStorage.setItem(KEY,JSON.stringify(data))}
+function saveNote(){data.planningNote=document.getElementById("planningNote").value;saveLocal();clearTimeout(window.__noteSync);window.__noteSync=setTimeout(async()=>{if(!cloudReady||!currentUser)return;const r=await supabaseClient.from("settings").upsert({user_id:currentUser.id,planning_note:data.planningNote||""},{onConflict:"user_id"});if(r.error)console.error(r.error)},500)}
 
 function renderOverview(){
   const totalStock=Object.values(data.stock).reduce((a,x)=>a+(+x.kg||0),0),totalArea=data.sowing.reduce((a,x)=>a+(+x.area||0),0),totalKg=data.sowing.reduce((a,x)=>a+(+x.area||0)*(+x.actual||0),0);
@@ -568,7 +679,8 @@ function resetData(){
 }
 
 document.querySelectorAll(".modal-backdrop").forEach(b=>b.addEventListener("click",e=>{if(e.target===b)b.classList.remove("open")}));
-setup();
+supabaseClient.auth.getSession().then(({data:{session}})=>startCloud(session));
+supabaseClient.auth.onAuthStateChange((_event,session)=>{if(session && !cloudReady)startCloud(session);});
 </script>
 </body>
 </html>
