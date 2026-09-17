@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#0f5c43">
+<title>Saatgut Planung – Betrieb Hach</title>
+<style>
+:root{
+  --green:#0f5c43;--green2:#187a55;--green3:#dff2e7;--bg:#f4f7f5;
+  --card:#fff;--text:#173229;--muted:#6a7b74;--line:#d8e3de;
+  --danger:#c53d3d;--dangerbg:#fff0f0;--blue:#eaf4ff;--amber:#fff7df;
+  --shadow:0 3px 12px rgba(15,55,42,.06);--radius:12px
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{display:flex;min-height:100vh}
+.sidebar{width:235px;background:linear-gradient(180deg,#123f35,#092c25);color:#fff;position:fixed;inset:0 auto 0 0;padding:18px 13px;z-index:20}
+.brand{font-size:20px;font-weight:800;padding:8px 11px 24px;letter-spacing:-.3px}
+.brand small{display:block;font-size:11px;font-weight:500;opacity:.72;margin-top:5px}
+.nav button{display:flex;align-items:center;gap:10px;width:100%;padding:12px 13px;border:0;background:transparent;color:#fff;text-align:left;border-radius:9px;margin:3px 0;font-size:14px}
+.nav button:hover,.nav button.active{background:#216a54}
+.main{margin-left:235px;width:calc(100% - 235px);min-width:0}
+header{height:66px;background:#fff;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 28px;position:sticky;top:0;z-index:10}
+.header-title{font-weight:800}.header-actions{display:flex;gap:8px;align-items:center}
+.content{padding:24px;max-width:1600px;margin:auto}
+.page{display:none}.page.active{display:block}
+h1{margin:0 0 18px;font-size:29px;letter-spacing:-.6px}h2{margin:0 0 14px;font-size:19px}h3{margin:0 0 9px;font-size:15px}
+.grid{display:grid;gap:16px}.grid2{grid-template-columns:repeat(2,minmax(0,1fr))}.grid3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px;box-shadow:var(--shadow)}
+.topline{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:16px}
+.form-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+label{display:block;font-size:12px;color:var(--muted);font-weight:800;margin-bottom:5px}
+input,select,textarea{width:100%;padding:10px 11px;border:1px solid #c9d6d0;border-radius:7px;background:#fff;color:var(--text);outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--green2);box-shadow:0 0 0 3px rgba(24,122,85,.10)}
+textarea{min-height:78px;resize:vertical}
+.btn{border:0;background:var(--green2);color:#fff;padding:10px 15px;border-radius:7px;font-weight:800}
+.btn:hover{filter:brightness(.96)}.btn.secondary{background:#edf2ef;color:var(--text)}
+.btn.danger{background:var(--danger)}.btn.small{padding:7px 10px;font-size:12px}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.muted{color:var(--muted)}.small{font-size:12px}.report-cards{align-items:start}.report-card{align-self:start}.report-card h2{margin-top:0}.report-table-card,.stock-table-card{align-self:start}.report-table-card .table-wrap,.stock-table-card .table-wrap{margin-top:0}
+.stat{font-size:27px;font-weight:850;margin-top:3px}
+.stat-label{font-size:12px;color:var(--muted);font-weight:750}
+.result{background:#eff8f3;border:1px solid #cbe2d5;border-radius:9px;padding:14px;margin-top:14px}
+.result.bad{background:var(--dangerbg);border-color:#edcccc}.result.warn{background:var(--amber);border-color:#eddca9}
+.big{font-size:27px;font-weight:850}
+.pill{display:inline-flex;align-items:center;padding:4px 9px;border-radius:20px;background:var(--green3);color:#16623f;font-weight:800;font-size:12px}
+.pill.bad{background:#fde1e1;color:#a32d2d}.pill.warn{background:#fff0c5;color:#805f00}
+.notice{padding:12px;border-radius:9px;background:var(--blue);border:1px solid #cfe2f5}
+table{width:100%;border-collapse:collapse;table-layout:auto;min-width:680px}th,td{padding:10px;border-bottom:1px solid var(--line);text-align:left;font-size:13px;vertical-align:top;white-space:nowrap;line-height:1.35}td:first-child,th:first-child{white-space:normal}
+th{background:#f4f7f5;font-size:12px;vertical-align:top}tr:hover td{background:#fbfcfb}
+.table-wrap{width:100%;overflow-x:auto;overflow-y:hidden;border:1px solid var(--line);border-radius:9px;-webkit-overflow-scrolling:touch;display:block}.table-wrap table{margin:0}
+.empty{text-align:center;padding:30px;color:var(--muted)}
+.tabs{display:flex;overflow:auto;background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:16px}
+.tab{border:0;background:#fff;padding:12px 16px;white-space:nowrap;color:var(--text);font-weight:700}
+.tab.active{background:var(--green);color:#fff}
+.crop-title{display:flex;align-items:center;gap:11px}.crop-icon{font-size:25px}
+.crop-list{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.crop-card{border:1px solid var(--line);border-radius:9px;padding:14px;background:#fff;cursor:pointer}
+.crop-card:hover{border-color:var(--green2);box-shadow:var(--shadow)}
+.crop-card strong{display:block;margin-bottom:4px}.crop-card .meta{font-size:12px;color:var(--muted)}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:10px;padding:15px}
+.progress{height:8px;background:#e9efec;border-radius:20px;overflow:hidden;margin-top:7px}.progress>span{display:block;height:100%;background:var(--green2)}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;align-items:center;justify-content:center;padding:18px;z-index:50}.modal-backdrop.open{display:flex}
+.modal{background:#fff;border-radius:13px;width:min(620px,100%);max-height:90vh;overflow:auto;padding:20px;box-shadow:0 18px 55px rgba(0,0,0,.22)}
+.modal.open{display:flex}.modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+.icon-btn{border:0;background:#edf2ef;border-radius:7px;width:34px;height:34px}
+.toast{position:fixed;right:20px;bottom:20px;background:#163e33;color:#fff;padding:11px 14px;border-radius:8px;display:none;z-index:70;box-shadow:var(--shadow)}
+.mobile-menu{display:none}
+.search{max-width:280px}
+hr{border:0;border-top:1px solid var(--line);margin:18px 0}
+@media(max-width:1100px){
+  .form-grid,.crop-list{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .kpi-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:820px){
+  .sidebar{width:70px;padding:14px 8px}.brand{font-size:0;padding:8px 8px 20px}.brand:first-letter{font-size:23px}.brand small{display:none}
+  .nav button{font-size:0;justify-content:center;padding:13px}.nav button span{font-size:21px}
+  .main{margin-left:70px;width:calc(100% - 70px)}header{padding:0 14px}.content{padding:14px}
+  .grid2,.grid3,.form-grid,.crop-list{grid-template-columns:1fr}.kpi-grid{grid-template-columns:1fr 1fr}
+  .header-title{font-size:14px}.header-actions .btn{display:none}
+}
+@media(max-width:520px){
+  h1{font-size:24px}.kpi-grid{grid-template-columns:1fr}.card{padding:14px}
+  th,td{padding:8px;font-size:12px}.table-wrap table{min-width:620px}
+  .modal-backdrop{padding:8px}.modal{padding:15px;max-height:94vh}
+}
+</style>
+</head>
+<body>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand">🌱 Saatgut Planung<small>Dein Betrieb. Deine Planung.</small></div>
+  <nav class="nav">
+    <button class="active" data-page="overview"><span>🏠</span> Übersicht</button>
+    <button data-page="seed"><span>🌱</span> Saatgutplanung</button>
+    <button data-page="stock"><span>📦</span> Lagerbestand</button>
+    <button data-page="sowing"><span>📝</span> Flächen & Aussaat</button>
+    <button data-page="calc"><span>🧮</span> Rechner</button>
+    <button data-page="reports"><span>📊</span> Berichte</button>
+    <button data-page="settings"><span>⚙️</span> Daten & Einstellungen</button>
+  </nav>
+</aside>
+
+<main class="main">
+<header>
+  <div class="header-title">🚜 Betrieb Hach</div>
+  <div class="header-actions">
+    <button class="btn secondary small" onclick="backupData()">Daten sichern</button>
+    <button class="btn small" onclick="openModal('fieldModal')">+ Schlag</button>
+  </div>
+</header>
+
+<div class="content">
+
+<section id="overview" class="page active">
+  <h1>Übersicht</h1>
+  <div class="kpi-grid" id="stats"></div>
+  <div class="grid grid2" style="margin-top:16px">
+    <div class="card"><div class="topline"><h2>Lagerbestand</h2><span class="muted small">aktuell</span></div><div id="overviewStock"></div></div>
+    <div class="card"><div class="topline"><h2>Letzte Aussaaten</h2><span class="muted small">zuletzt dokumentiert</span></div><div id="overviewSowing"></div></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="topline"><div><h2>Saatgut – reicht der Bestand?</h2><div class="muted small">Vergleich von Lagerbestand und geplanter Fläche.</div></div></div>
+    <div id="overviewPlanning"></div>
+  </div>
+</section>
+
+<section id="seed" class="page">
+  <h1>Saatgutplanung</h1>
+  <div class="tabs" id="cropTabs"></div>
+  <div class="grid grid2">
+    <div class="card">
+      <div class="crop-title"><span class="crop-icon" id="cropIcon">☘️</span><div><h2 id="cropName">Kleegras</h2><span class="muted" id="cropDesc"></span></div></div>
+      <div class="form-grid" style="margin-top:15px">
+        <div><label>Aussaatstärke (kg/ha)</label><input id="rate" type="number" min="0" step="0.1" oninput="calculateSeed()"></div>
+        <div><label>Geplante Fläche (ha)</label><input id="area" type="number" min="0" step="0.01" oninput="calculateSeed()"></div>
+        <div><label>Vorhandener Bestand (kg)</label><input id="stockForCrop" type="number" readonly></div>
+      </div>
+      <div class="actions"><button class="btn" onclick="calculateSeed()">Berechnen</button><button class="btn secondary" onclick="useFieldArea()">Schlagfläche übernehmen</button></div>
+      <div class="result" id="seedResult">Gib Aussaatstärke und Fläche ein.</div>
+    </div>
+    <div class="card">
+      <div class="topline"><h2>Saatgutbedarf je Kultur</h2><span class="muted small">Basis: Standard-Aussaatstärke</span></div>
+      <div class="table-wrap"><table><thead><tr><th>Kultur</th><th>kg/ha</th><th>Bestand</th><th>max. Fläche</th></tr></thead><tbody id="seedTable"></tbody></table></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <h2>Planungsnotizen</h2>
+    <textarea id="planningNote" placeholder="Notizen zur Saatgutplanung …" oninput="saveNote()"></textarea>
+  </div>
+</section>
+
+<section id="stock" class="page">
+  <div class="topline">
+    <div><h1>Lagerbestand</h1><div class="muted small">Bestände werden bei dokumentierter Aussaat automatisch reduziert.</div></div>
+    <button class="btn" type="button" onclick="openStockModal()">+ Bestand eintragen</button>
+  </div>
+  <div class="card" style="margin-bottom:16px">
+    <div class="topline" style="margin-bottom:10px"><h2>Schnellerfassung</h2><span class="muted small">Kultur auswählen, Menge eintragen, speichern.</span></div>
+    <div class="form-grid">
+      <div><label>Kultur</label><select id="quickCrop"></select></div>
+      <div><label>Bestand (kg)</label><input id="quickKg" type="number" min="0" step="0.1" placeholder="z. B. 500"></div>
+      <div><label>Lagerort</label><input id="quickLocation" placeholder="z. B. Saatguthalle"></div>
+    </div>
+    <div class="actions"><button class="btn" type="button" onclick="saveQuickStock()">Bestand speichern</button></div>
+  </div>
+  <div class="card stock-table-card">
+    <div class="table-wrap"><table><thead><tr><th>Kultur</th><th>Bestand kg</th><th>Lagerort</th><th>Reicht für</th><th>Aktion</th></tr></thead><tbody id="stockTable"></tbody></table></div>
+  </div>
+</section>
+
+<section id="sowing" class="page">
+  <div class="topline"><div><h1>Flächen & Aussaat</h1><div class="muted small">Schläge werden direkt mit der Aussaat verknüpft.</div></div><div class="actions" style="margin:0"><button class="btn secondary" onclick="openModal('fieldModal')">+ Schlag anlegen</button><button class="btn" onclick="openSowingModal()">+ Aussaat dokumentieren</button></div></div>
+  <div class="grid grid2">
+    <div class="card"><h2>Meine Schläge</h2><div class="table-wrap"><table><thead><tr><th>Schlag</th><th>Fläche</th><th>Aussaaten</th><th></th></tr></thead><tbody id="fieldTable"></tbody></table></div></div>
+    <div class="card"><h2>Aussaat-Übersicht</h2><div id="fieldSummary"></div></div>
+  </div>
+  <div class="card" style="margin-top:16px">
+    <div class="topline"><h2>Dokumentierte Aussaaten</h2><div class="actions" style="margin:0"><input class="search" id="sowingSearch" placeholder="Kultur oder Schlag suchen …" oninput="renderSowing()"><button class="btn secondary" onclick="exportCSV()">CSV exportieren</button></div></div>
+    <div class="table-wrap"><table><thead><tr><th>Datum</th><th>Kultur</th><th>Schlag</th><th>Fläche</th><th>geplant</th><th>tatsächlich</th><th>Verbrauch</th><th>Abweichung</th><th></th></tr></thead><tbody id="sowingTable"></tbody></table></div>
+  </div>
+</section>
+
+<section id="calc" class="page">
+<h1>Landwirtschaftliche Rechner</h1>
+<div class="grid grid2">
+  <div class="card">
+    <h2>🌱 Pflanzenzahl-Rechner</h2><p class="muted small">Körner/m² aus Aussaatstärke, TKG und Keim-/Feldaufgang.</p>
+    <div class="form-grid">
+      <div><label>Aussaatstärke (kg/ha)</label><input id="plantRate" type="number" min="0" step="0.1"></div>
+      <div><label>Tausendkorngewicht (g)</label><input id="tkw" type="number" min="0" step="0.1"></div>
+      <div><label>Keimfähigkeit (%)</label><input id="germ" type="number" min="0" max="100" step="0.1" value="100"></div>
+      <div><label>Feldaufgang (%)</label><input id="emerg" type="number" min="0" max="100" step="0.1" value="100"></div>
+      <div><label>Ziel: Pflanzen/m²</label><input id="targetPlants" type="number" min="0" step="0.1"></div>
+    </div>
+    <div class="actions"><button class="btn" onclick="calcPlants()">Berechnen</button></div><div class="result" id="plantResult">Beispiel: 180 kg/ha bei 200 g TKG entsprechen 90 Körner/m² vor Abzügen.</div>
+  </div>
+
+  <div class="card">
+    <h2>🎯 Ziel-Aussaatstärke</h2><p class="muted small">Benötigte kg/ha für eine gewünschte Pflanzenzahl.</p>
+    <div class="form-grid">
+      <div><label>Ziel Pflanzen/m²</label><input id="targetRatePlants" type="number" min="0" step="0.1"></div>
+      <div><label>Tausendkorngewicht (g)</label><input id="targetTkw" type="number" min="0" step="0.1"></div>
+      <div><label>Keimfähigkeit (%)</label><input id="targetGerm" type="number" min="0" max="100" step="0.1" value="100"></div>
+      <div><label>Feldaufgang (%)</label><input id="targetEmerg" type="number" min="0" max="100" step="0.1" value="100"></div>
+    </div>
+    <div class="actions"><button class="btn" onclick="calcTargetRate()">Berechnen</button></div><div class="result" id="targetRateResult">Noch keine Berechnung.</div>
+  </div>
+
+  <div class="card">
+    <h2>📐 Flächenrechner – reicht mein Bestand?</h2>
+    <div class="form-grid">
+      <div><label>Kultur</label><select id="crCrop" onchange="syncCalcRate()"></select></div>
+      <div><label>Aussaatstärke (kg/ha)</label><input id="crRate" type="number" min="0" step="0.1"></div>
+      <div><label>Lagerbestand (kg)</label><input id="crStock" type="number" min="0" step="0.1"></div>
+    </div>
+    <div class="actions"><button class="btn" onclick="calcArea()">Berechnen</button></div><div class="result" id="crResult">Noch keine Berechnung.</div>
+  </div>
+
+  <div class="card">
+    <h2>🧮 Saatgut-Bedarfsrechner</h2>
+    <div class="form-grid">
+      <div><label>Fläche (ha)</label><input id="needArea" type="number" min="0" step="0.01"></div>
+      <div><label>Menge je ha (kg/ha)</label><input id="needRate" type="number" min="0" step="0.1"></div>
+      <div><label>Preis (€/kg)</label><input id="needPrice" type="number" min="0" step="0.01"></div>
+    </div>
+    <div class="actions"><button class="btn" onclick="calcNeed()">Berechnen</button></div><div class="result" id="needResult">Noch keine Berechnung.</div>
+  </div>
+</div>
+</section>
+
+<section id="reports" class="page">
+  <div class="topline"><div><h1>Berichte</h1><div class="muted small">Zusammenfassung der dokumentierten Aussaaten.</div></div><button class="btn" onclick="exportCSV()">Aussaaten als CSV exportieren</button></div>
+  <div class="card report-table-card"><h2>Zusammenfassung Aussaat</h2><div class="table-wrap"><table><thead><tr><th>Kultur</th><th>Fläche ha</th><th>Verbrauch kg</th><th>Ø kg/ha</th><th>Planabweichung</th></tr></thead><tbody id="reportTable"></tbody></table></div></div>
+  <div class="grid grid2 report-cards" style="margin-top:16px">
+    <div class="card report-card"><h2>Flächen nach Kultur</h2><div id="reportArea"></div></div>
+    <div class="card report-card"><h2>Verbrauch nach Kultur</h2><div id="reportKg"></div></div>
+  </div>
+</section>
+
+<section id="settings" class="page">
+  <h1>Daten & Einstellungen</h1>
+  <div class="grid grid2">
+    <div class="card">
+      <h2>Datensicherung</h2><p class="muted small">Alle Daten liegen lokal im Browser. Für einen Gerätewechsel kannst du eine JSON-Sicherung exportieren und später wieder importieren.</p>
+      <div class="actions"><button class="btn" onclick="backupData()">JSON sichern</button><button class="btn secondary" onclick="document.getElementById('restoreFile').click()">JSON wiederherstellen</button><input id="restoreFile" type="file" accept=".json,application/json" hidden onchange="restoreData(event)"></div>
+      <div class="notice" style="margin-top:14px">Tipp: Vor größeren Änderungen eine Sicherung erstellen.</div>
+    </div>
+    <div class="card">
+      <h2>Daten zurücksetzen</h2><p class="muted small">Setzt die lokale Saatgutplanung vollständig zurück. Dieser Schritt kann nicht rückgängig gemacht werden.</p>
+      <button class="btn danger" onclick="resetData()">Alle Daten löschen</button>
+    </div>
+  </div>
+</section>
+
+</div></main></div>
+
+<div class="modal-backdrop" id="stockModal">
+  <div class="modal">
+    <div class="modal-header"><h2 id="stockModalTitle">Bestand eintragen</h2><button class="icon-btn" onclick="closeModal('stockModal')">✕</button></div>
+    <div class="form-grid">
+      <div><label>Kultur</label><select id="sfCrop"></select></div>
+      <div><label>Bestand (kg)</label><input id="sfKg" type="number" min="0" step="0.1"></div>
+      <div><label>Lagerort</label><input id="sfLocation" placeholder="z. B. Silo 1"></div>
+    </div>
+    <div class="actions"><button class="btn" onclick="saveStock()">Speichern</button><button class="btn secondary" onclick="closeModal('stockModal')">Abbrechen</button></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="fieldModal">
+  <div class="modal">
+    <div class="modal-header"><h2>Schlag anlegen</h2><button class="icon-btn" onclick="closeModal('fieldModal')">✕</button></div>
+    <div class="form-grid">
+      <div><label>Name des Schlages</label><input id="fieldName" placeholder="z. B. Achterkamp"></div>
+      <div><label>Fläche (ha)</label><input id="fieldArea" type="number" min="0" step="0.01"></div>
+      <div><label>Notiz</label><input id="fieldNote" placeholder="optional"></div>
+    </div>
+    <div class="actions"><button class="btn" onclick="saveField()">Schlag speichern</button><button class="btn secondary" onclick="closeModal('fieldModal')">Abbrechen</button></div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="sowingModal">
+  <div class="modal">
+    <div class="modal-header"><h2>Neue Aussaat dokumentieren</h2><button class="icon-btn" onclick="closeModal('sowingModal')">✕</button></div>
+    <div class="form-grid">
+      <div><label>Datum</label><input id="swDate" type="date"></div>
+      <div><label>Kultur</label><select id="swCrop" onchange="syncSowingPlan()"></select></div>
+      <div><label>Schlag</label><select id="swField" onchange="syncSowingField()"></select></div>
+      <div><label>Fläche (ha)</label><input id="swArea" type="number" min="0" step="0.01"></div>
+      <div><label>Geplant (kg/ha)</label><input id="swPlan" type="number" min="0" step="0.1"></div>
+      <div><label>Tatsächlich (kg/ha)</label><input id="swActual" type="number" min="0" step="0.1"></div>
+      <div><label>Sorte</label><input id="swVariety" placeholder="Sorte"></div>
+      <div><label>Partie / Charge</label><input id="swBatch" placeholder="Partienummer"></div>
+      <div><label>Maschine</label><input id="swMachine" placeholder="Sämaschine"></div>
+    </div>
+    <div style="margin-top:12px"><label>Bemerkung</label><textarea id="swNote"></textarea></div>
+    <div class="actions"><button class="btn" onclick="saveSowing()">Aussaat speichern</button><button class="btn secondary" onclick="closeModal('sowingModal')">Abbrechen</button></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const crops={
+  "Kleegras":{icon:"☘️",desc:"Mehrjähriges Futtergras",rate:25},
+  "Sommererbsen":{icon:"🫛",desc:"Sommerleguminose",rate:180},
+  "Winterbohnen":{icon:"🫘",desc:"Winterkultur",rate:200},
+  "Sommerbohnen":{icon:"🫘",desc:"Sommerkultur",rate:150},
+  "Winterhafer":{icon:"🌾",desc:"Wintergetreide",rate:120},
+  "Sommerhafer":{icon:"🌾",desc:"Sommergetreide",rate:100}
+};
+const KEY="saatgutPlanHach";
+const defaultData=()=>({
+  stock:Object.fromEntries(Object.keys(crops).map(c=>[c,{kg:0,location:""}])),
+  sowing:[],fields:[],planningNote:""
+});
+let data=loadData(),selectedCrop="Kleegras",editStock=null;
+
+function loadData(){
+  try{
+    const x=JSON.parse(localStorage.getItem(KEY)||"null")||defaultData();
+    x.stock=x.stock||{};x.sowing=x.sowing||[];x.fields=x.fields||[];x.planningNote=x.planningNote||"";
+    Object.keys(crops).forEach(c=>{if(!x.stock[c])x.stock[c]={kg:0,location:""}});
+    x.sowing=x.sowing.map(s=>({...s,fieldId:s.fieldId??null}));
+    return x;
+  }catch(e){return defaultData()}
+}
+function saveData(){localStorage.setItem(KEY,JSON.stringify(data));renderAll()}
+function num(x){return new Intl.NumberFormat("de-DE",{maximumFractionDigits:2}).format(Number(x)||0)}
+function money(x){return new Intl.NumberFormat("de-DE",{style:"currency",currency:"EUR"}).format(Number(x)||0)}
+function today(){return new Date().toISOString().slice(0,10)}
+function esc(v){return String(v??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]))}
+function toast(msg){const t=document.getElementById("toast");t.textContent=msg;t.style.display="block";clearTimeout(window.__toast);window.__toast=setTimeout(()=>t.style.display="none",2200)}
+function openModal(id){const el=document.getElementById(id);if(!el){toast("Dialog konnte nicht geöffnet werden.");return}el.classList.add("open")}
+function closeModal(id){const el=document.getElementById(id);if(el)el.classList.remove("open")}
+
+document.querySelectorAll(".nav button").forEach(btn=>btn.addEventListener("click",()=>{
+  document.querySelectorAll(".nav button").forEach(b=>b.classList.remove("active"));btn.classList.add("active");
+  document.querySelectorAll(".page").forEach(p=>p.classList.remove("active"));
+  document.getElementById(btn.dataset.page).classList.add("active");
+  window.scrollTo({top:0,behavior:"smooth"});
+}));
+
+function fillSelect(id){
+  const el=document.getElementById(id);if(!el)return;
+  el.innerHTML=Object.keys(crops).map(c=>`<option value="${esc(c)}">${crops[c].icon} ${esc(c)}</option>`).join("");
+}
+function setup(){
+  fillSelect("sfCrop");fillSelect("swCrop");fillSelect("crCrop");fillSelect("quickCrop");
+  document.getElementById("swDate").value=today();
+  document.getElementById("planningNote").value=data.planningNote;
+  buildCropTabs();refreshFieldSelect();selectCrop(selectedCrop);syncCalcRate();renderAll();
+}
+function buildCropTabs(){
+  document.getElementById("cropTabs").innerHTML=Object.keys(crops).map(c=>`<button class="tab" onclick="selectCrop('${esc(c)}')">${crops[c].icon} ${esc(c)}</button>`).join("");
+}
+function selectCrop(c){
+  selectedCrop=c;
+  document.querySelectorAll(".tab").forEach((b,i)=>b.classList.toggle("active",Object.keys(crops)[i]===c));
+  document.getElementById("cropIcon").textContent=crops[c].icon;
+  document.getElementById("cropName").textContent=c;
+  document.getElementById("cropDesc").textContent=crops[c].desc;
+  document.getElementById("rate").value=crops[c].rate;
+  document.getElementById("stockForCrop").value=data.stock[c]?.kg||0;
+  calculateSeed();
+}
+function calculateSeed(){
+  const rate=+document.getElementById("rate").value||0,area=+document.getElementById("area").value||0,stock=+document.getElementById("stockForCrop").value||0;
+  const need=rate*area,max=rate?stock/rate:0;
+  let cls=area>0?(need<=stock?"":"bad"):"";
+  document.getElementById("seedResult").className="result "+cls;
+  document.getElementById("seedResult").innerHTML=`
+    <div>Gesamtbedarf: <span class="big">${num(need)} kg</span></div>
+    <div>Maximal mögliche Fläche mit dem Bestand: <b>${num(max)} ha</b></div>
+    <div style="margin-top:8px">${area>0?(need<=stock?'<span class="pill">Bestand reicht aus</span>':'<span class="pill bad">Bestand reicht nicht aus</span>'):'Bitte Fläche eingeben.'}</div>`;
+  renderSeedTable();
+}
+function useFieldArea(){
+  if(!data.fields.length){toast("Bitte zuerst einen Schlag anlegen.");return}
+  const f=data.fields[0];document.getElementById("area").value=f.area;calculateSeed();
+  toast(`Fläche von „${f.name}“ übernommen`);
+}
+function renderSeedTable(){
+  const area=+document.getElementById("area").value||0;
+  document.getElementById("seedTable").innerHTML=Object.keys(crops).map(c=>{
+    const s=data.stock[c]?.kg||0,max=crops[c].rate?s/crops[c].rate:0;
+    return `<tr><td>${crops[c].icon} ${esc(c)}</td><td>${num(crops[c].rate)}</td><td>${num(s)} kg</td><td><span class="pill">${num(max)} ha</span></td></tr>`;
+  }).join("");
+}
+function saveQuickStock(){
+  const c=document.getElementById("quickCrop").value;
+  const kg=+document.getElementById("quickKg").value||0;
+  const location=document.getElementById("quickLocation").value.trim();
+  if(!c || kg<0){toast("Bitte Kultur und gültigen Bestand eingeben.");return}
+  data.stock[c]={kg,location};
+  document.getElementById("quickKg").value="";
+  document.getElementById("quickLocation").value="";
+  saveData();
+  toast("Lagerbestand gespeichert");
+}
+function openStockModal(){
+  editStock=null;document.getElementById("stockModalTitle").textContent="Bestand eintragen";
+  document.getElementById("sfCrop").value=selectedCrop;document.getElementById("sfKg").value="";document.getElementById("sfLocation").value="";openModal("stockModal");
+}
+function editStockItem(c){
+  editStock=c;document.getElementById("stockModalTitle").textContent="Bestand bearbeiten";
+  document.getElementById("sfCrop").value=c;document.getElementById("sfKg").value=data.stock[c]?.kg||0;document.getElementById("sfLocation").value=data.stock[c]?.location||"";openModal("stockModal");
+}
+function saveStock(){
+  const c=document.getElementById("sfCrop").value;
+  data.stock[c]={kg:Math.max(0,+document.getElementById("sfKg").value||0),location:document.getElementById("sfLocation").value.trim()};
+  closeModal("stockModal");saveData();toast("Lagerbestand gespeichert");
+}
+function renderStock(){
+  const qc=document.getElementById("quickCrop"); if(qc && !qc.value) qc.value=selectedCrop;
+  document.getElementById("stockTable").innerHTML=Object.keys(crops).map(c=>{
+    const s=data.stock[c]||{kg:0,location:""},max=crops[c].rate?s.kg/crops[c].rate:0;
+    return `<tr><td><b>${crops[c].icon} ${esc(c)}</b></td><td>${num(s.kg)} kg</td><td>${esc(s.location)||"–"}</td><td><span class="pill">${num(max)} ha</span></td><td><button class="btn secondary small" onclick="editStockItem('${esc(c)}')">Bearbeiten</button></td></tr>`;
+  }).join("");
+}
+
+function openSowingModal(){
+  refreshFieldSelect();document.getElementById("swDate").value=today();
+  document.getElementById("swActual").value="";document.getElementById("swVariety").value="";document.getElementById("swBatch").value="";document.getElementById("swMachine").value="";document.getElementById("swNote").value="";
+  syncSowingPlan();openModal("sowingModal");
+}
+function refreshFieldSelect(){
+  const el=document.getElementById("swField");
+  el.innerHTML=data.fields.length?data.fields.map(f=>`<option value="${f.id}">${esc(f.name)} – ${num(f.area)} ha</option>`).join(""):`<option value="">Bitte zuerst einen Schlag anlegen</option>`;
+  syncSowingField();
+}
+function syncSowingField(){
+  const f=data.fields.find(x=>String(x.id)===String(document.getElementById("swField").value));
+  if(f)document.getElementById("swArea").value=f.area;
+}
+function syncSowingPlan(){
+  const c=document.getElementById("swCrop").value;if(c)document.getElementById("swPlan").value=crops[c].rate;
+}
+function saveSowing(){
+  const c=document.getElementById("swCrop").value,fieldId=document.getElementById("swField").value;
+  const field=data.fields.find(x=>String(x.id)===String(fieldId));
+  const a=+document.getElementById("swArea").value||0,actual=+document.getElementById("swActual").value||0,plan=+document.getElementById("swPlan").value||0;
+  if(!field){toast("Bitte zuerst einen Schlag anlegen.");return}
+  if(a<=0||actual<=0){toast("Bitte Fläche und tatsächliche Aussaatstärke eingeben.");return}
+  const record={
+    id:Date.now(),date:document.getElementById("swDate").value,crop:c,fieldId:field.id,field:field.name,area:a,plan,actual,
+    variety:document.getElementById("swVariety").value.trim(),batch:document.getElementById("swBatch").value.trim(),
+    machine:document.getElementById("swMachine").value.trim(),note:document.getElementById("swNote").value.trim()
+  };
+  data.sowing.unshift(record);data.stock[c].kg=Math.max(0,(data.stock[c]?.kg||0)-a*actual);
+  closeModal("sowingModal");saveData();toast("Aussaat gespeichert – Bestand aktualisiert");
+}
+function deleteSowing(id){
+  const x=data.sowing.find(a=>a.id===id);if(!x)return;
+  if(confirm("Aussaat löschen und den verbrauchten Bestand wieder gutschreiben?")){
+    data.stock[x.crop].kg=(data.stock[x.crop]?.kg||0)+x.area*x.actual;
+    data.sowing=data.sowing.filter(a=>a.id!==id);saveData();toast("Aussaat gelöscht");
+  }
+}
+function renderSowing(){
+  const q=(document.getElementById("sowingSearch")?.value||"").toLowerCase().trim();
+  const xs=data.sowing.filter(x=>!q||`${x.crop} ${x.field} ${x.date}`.toLowerCase().includes(q));
+  document.getElementById("sowingTable").innerHTML=xs.length?xs.map(x=>{
+    const dev=x.actual-x.plan;
+    return `<tr><td>${esc(x.date)}</td><td>${crops[x.crop]?.icon||"🌱"} ${esc(x.crop)}</td><td>${esc(x.field)||"–"}</td><td>${num(x.area)} ha</td><td>${num(x.plan)} kg/ha</td><td>${num(x.actual)} kg/ha</td><td>${num(x.area*x.actual)} kg</td><td><span class="pill ${dev>0.001?"bad":""}">${dev>0?"+":""}${num(dev)} kg/ha</span></td><td><button class="btn danger small" onclick="deleteSowing(${x.id})">Löschen</button></td></tr>`;
+  }).join(""):`<tr><td colspan="9" class="empty">Keine passenden Aussaaten.</td></tr>`;
+}
+function saveField(){
+  const name=document.getElementById("fieldName").value.trim(),area=+document.getElementById("fieldArea").value||0,note=document.getElementById("fieldNote").value.trim();
+  if(!name||area<=0){toast("Name und gültige Fläche eingeben.");return}
+  data.fields.push({id:Date.now(),name,area,note});document.getElementById("fieldName").value="";document.getElementById("fieldArea").value="";document.getElementById("fieldNote").value="";
+  closeModal("fieldModal");saveData();toast(`Schlag „${name}“ angelegt`);
+}
+function deleteField(id){
+  const linked=data.sowing.filter(x=>String(x.fieldId)===String(id)).length;
+  if(linked){toast("Schlag kann wegen verknüpfter Aussaaten nicht gelöscht werden.");return}
+  if(confirm("Schlag wirklich löschen?")){data.fields=data.fields.filter(x=>x.id!==id);saveData();toast("Schlag gelöscht")}
+}
+function renderFields(){
+  document.getElementById("fieldTable").innerHTML=data.fields.length?data.fields.map(f=>{
+    const count=data.sowing.filter(x=>String(x.fieldId)===String(f.id)).length;
+    return `<tr><td><b>${esc(f.name)}</b>${f.note?`<br><span class="muted small">${esc(f.note)}</span>`:""}</td><td>${num(f.area)} ha</td><td>${count}</td><td><button class="btn danger small" onclick="deleteField(${f.id})">Löschen</button></td></tr>`;
+  }).join(""):`<tr><td colspan="4" class="empty">Noch keine Schläge angelegt.</td></tr>`;
+  document.getElementById("fieldSummary").innerHTML=data.fields.length?data.fields.map(f=>{
+    const xs=data.sowing.filter(x=>String(x.fieldId)===String(f.id)),last=xs[0];
+    return `<div style="padding:11px 0;border-bottom:1px solid var(--line)"><b>${esc(f.name)}</b> · ${num(f.area)} ha<br><span class="muted small">${last?`Letzte Aussaat: ${esc(last.date)} · ${esc(last.crop)} · ${num(last.actual)} kg/ha`:"Noch keine Aussaat dokumentiert"}</span></div>`;
+  }).join(""):`<div class="empty">Noch keine Schläge angelegt.</div>`;
+  refreshFieldSelect();
+}
+
+function syncCalcRate(){const c=document.getElementById("crCrop").value;if(!c)return;document.getElementById("crRate").value=crops[c].rate;document.getElementById("crStock").value=data.stock[c]?.kg||0}
+function calcPlants(){
+  const rate=+document.getElementById("plantRate").value||0,tkw=+document.getElementById("tkw").value||0,germ=(+document.getElementById("germ").value||0)/100,emerg=(+document.getElementById("emerg").value||0)/100,target=+document.getElementById("targetPlants").value||0;
+  if(!rate||!tkw){document.getElementById("plantResult").innerHTML='<span class="pill bad">Aussaatstärke und TKG eingeben.</span>';return}
+  const seeds=rate*1000/tkw/10000,plants=seeds*germ*emerg;
+  document.getElementById("plantResult").innerHTML=`Saatgutmenge entspricht <span class="big">${num(seeds)} Körner/m²</span> vor Keim-/Aufgangsverlusten.<br>Erwartete Pflanzenzahl: <span class="big">${num(plants)} Pflanzen/m²</span>${target?`<br>Abweichung zum Ziel: <b>${num(plants-target)} Pflanzen/m²</b>`:""}`;
+}
+function calcTargetRate(){
+  const target=+document.getElementById("targetRatePlants").value||0,tkw=+document.getElementById("targetTkw").value||0,germ=(+document.getElementById("targetGerm").value||0)/100,emerg=(+document.getElementById("targetEmerg").value||0)/100;
+  if(!target||!tkw||!germ||!emerg){document.getElementById("targetRateResult").innerHTML='<span class="pill bad">Bitte alle Werte eingeben.</span>';return}
+  document.getElementById("targetRateResult").innerHTML=`Benötigte Aussaatstärke: <span class="big">${num(target*tkw*10/(germ*emerg))} kg/ha</span>`;
+}
+function calcArea(){
+  const r=+document.getElementById("crRate").value||0,s=+document.getElementById("crStock").value||0;
+  document.getElementById("crResult").innerHTML=`Mit ${num(s)} kg und ${num(r)} kg/ha kannst du <span class="big">${num(r?s/r:0)} ha</span> bestellen.`;
+}
+function calcNeed(){
+  const a=+document.getElementById("needArea").value||0,r=+document.getElementById("needRate").value||0,p=+document.getElementById("needPrice").value||0;
+  document.getElementById("needResult").innerHTML=`Bedarf: <span class="big">${num(a*r)} kg</span><br>Gesamtkosten: <b>${money(a*r*p)}</b>`;
+}
+function saveNote(){data.planningNote=document.getElementById("planningNote").value;localStorage.setItem(KEY,JSON.stringify(data))}
+
+function renderOverview(){
+  const totalStock=Object.values(data.stock).reduce((a,x)=>a+(+x.kg||0),0),totalArea=data.sowing.reduce((a,x)=>a+(+x.area||0),0),totalKg=data.sowing.reduce((a,x)=>a+(+x.area||0)*(+x.actual||0),0);
+  document.getElementById("stats").innerHTML=`
+    <div class="kpi"><div class="stat-label">Lagerbestand gesamt</div><div class="stat">${num(totalStock)} kg</div></div>
+    <div class="kpi"><div class="stat-label">Dokumentierte Aussaatfläche</div><div class="stat">${num(totalArea)} ha</div></div>
+    <div class="kpi"><div class="stat-label">Saatgutverbrauch dokumentiert</div><div class="stat">${num(totalKg)} kg</div></div>
+    <div class="kpi"><div class="stat-label">Angelegte Schläge</div><div class="stat">${data.fields.length}</div></div>`;
+  document.getElementById("overviewStock").innerHTML=Object.keys(crops).map(c=>`<div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--line)"><span>${crops[c].icon} ${esc(c)}</span><b>${num(data.stock[c].kg)} kg</b></div>`).join("");
+  document.getElementById("overviewSowing").innerHTML=data.sowing.slice(0,5).map(x=>`<div style="padding:8px 0;border-bottom:1px solid var(--line)"><b>${esc(x.crop)}</b> – ${esc(x.field)||"ohne Schlag"}<br><span class="muted small">${esc(x.date)} · ${num(x.area)} ha · ${num(x.actual)} kg/ha</span></div>`).join("")||'<div class="empty">Noch keine Daten.</div>';
+  document.getElementById("overviewPlanning").innerHTML=Object.keys(crops).map(c=>{
+    const stock=data.stock[c]?.kg||0,rate=crops[c].rate,max=rate?stock/rate:0;
+    return `<div style="padding:10px 0;border-bottom:1px solid var(--line)"><div style="display:flex;justify-content:space-between"><span><b>${crops[c].icon} ${esc(c)}</b></span><span>${num(stock)} kg · <b>${num(max)} ha</b></span></div><div class="progress"><span style="width:${Math.min(100,Math.max(0,max/10*100))}%"></span></div></div>`;
+  }).join("");
+}
+function renderReport(){
+  document.getElementById("reportTable").innerHTML=Object.keys(crops).map(c=>{
+    const xs=data.sowing.filter(x=>x.crop===c),a=xs.reduce((s,x)=>s+x.area,0),kg=xs.reduce((s,x)=>s+x.area*x.actual,0),dev=xs.length?xs.reduce((s,x)=>s+(x.actual-x.plan),0)/xs.length:0;
+    return `<tr><td>${crops[c].icon} ${esc(c)}</td><td>${num(a)}</td><td>${num(kg)}</td><td>${num(a?kg/a:0)}</td><td><span class="pill ${dev>0.001?"bad":""}">${dev>0?"+":""}${num(dev)} kg/ha</span></td></tr>`;
+  }).join("");
+  const totalArea=data.sowing.reduce((s,x)=>s+x.area,0)||1,totalKg=data.sowing.reduce((s,x)=>s+x.area*x.actual,0)||1;
+  document.getElementById("reportArea").innerHTML=Object.keys(crops).map(c=>{const a=data.sowing.filter(x=>x.crop===c).reduce((s,x)=>s+x.area,0);return `<div style="margin:9px 0"><div style="display:flex;justify-content:space-between"><span>${crops[c].icon} ${esc(c)}</span><b>${num(a)} ha</b></div><div class="progress"><span style="width:${Math.min(100,a/totalArea*100)}%"></span></div></div>`}).join("");
+  document.getElementById("reportKg").innerHTML=Object.keys(crops).map(c=>{const kg=data.sowing.filter(x=>x.crop===c).reduce((s,x)=>s+x.area*x.actual,0);return `<div style="margin:9px 0"><div style="display:flex;justify-content:space-between"><span>${crops[c].icon} ${esc(c)}</span><b>${num(kg)} kg</b></div><div class="progress"><span style="width:${Math.min(100,kg/totalKg*100)}%"></span></div></div>`}).join("");
+}
+function renderAll(){renderStock();renderSowing();renderFields();renderOverview();renderReport();document.getElementById("stockForCrop").value=data.stock[selectedCrop]?.kg||0;document.getElementById("planningNote").value=data.planningNote||""}
+
+function exportCSV(){
+  const head=["Datum","Kultur","Schlag","Fläche ha","Geplant kg/ha","Tatsächlich kg/ha","Verbrauch kg","Sorte","Partie","Maschine","Bemerkung"];
+  const rows=data.sowing.map(x=>[x.date,x.crop,x.field,x.area,x.plan,x.actual,x.area*x.actual,x.variety,x.batch,x.machine,x.note]);
+  const csv=[head,...rows].map(r=>r.map(v=>`"${String(v??"").replaceAll('"','""')}"`).join(";")).join("\n");
+  const blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download="Aussaat-Dokumentation-Betrieb-Hach.csv";a.click();URL.revokeObjectURL(url);toast("CSV exportiert");
+}
+function backupData(){
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"}),url=URL.createObjectURL(blob),a=document.createElement("a");
+  a.href=url;a.download="Saatgut_Planung_Betrieb_Hach_Sicherung.json";a.click();URL.revokeObjectURL(url);toast("Datensicherung erstellt");
+}
+function restoreData(event){
+  const file=event.target.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{try{
+    const x=JSON.parse(e.target.result);
+    if(!x.stock||!Array.isArray(x.sowing)||!Array.isArray(x.fields))throw new Error();
+    data=x;Object.keys(crops).forEach(c=>{if(!data.stock[c])data.stock[c]={kg:0,location:""}});
+    saveData();toast("Datensicherung wiederhergestellt");
+  }catch(err){alert("Die Datei ist keine gültige Saatgut-Planung-Sicherung.")}};
+  reader.readAsText(file);event.target.value="";
+}
+function resetData(){
+  if(confirm("Wirklich ALLE Daten der Saatgutplanung löschen?")){
+    data=defaultData();saveData();toast("Alle Daten wurden gelöscht");
+  }
+}
+
+document.querySelectorAll(".modal-backdrop").forEach(b=>b.addEventListener("click",e=>{if(e.target===b)b.classList.remove("open")}));
+setup();
+</script>
+</body>
+</html>
